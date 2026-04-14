@@ -20,7 +20,7 @@ if openai_api_key and serper_api_key:
     os.environ["OPENAI_API_KEY"] = openai_api_key
     os.environ["SERPER_API_KEY"] = serper_api_key
 
-    # ✅ Explicit LLM (THIS FIXES YOUR ERROR)
+    # LLM
     llm = ChatOpenAI(
         model="gpt-3.5-turbo",
         temperature=0.7
@@ -41,7 +41,7 @@ if openai_api_key and serper_api_key:
     )
     focus_areas = st.text_input("Focus areas or concerns:")
 
-    # Agents (WITH LLM)
+    # Agents
     context_analyzer = Agent(
         role='Meeting Context Specialist',
         goal='Analyze meeting background',
@@ -68,6 +68,7 @@ if openai_api_key and serper_api_key:
         backstory='Expert planner',
         verbose=True,
         allow_delegation=False,
+        tools=[],   # ✅ FIX HERE
         llm=llm
     )
 
@@ -77,6 +78,7 @@ if openai_api_key and serper_api_key:
         backstory='Expert communicator',
         verbose=True,
         allow_delegation=False,
+        tools=[],   # ✅ FIX HERE
         llm=llm
     )
 
