@@ -1,0 +1,6 @@
+#!/Users/shobhit/awesome-llm-apps/advanced_ai_agents/single_agent_apps/ai_meeting_agent/venv/bin/python3.11
+import sys
+from build.__main__ import entrypoint
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(entrypoint())
