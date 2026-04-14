@@ -5,30 +5,31 @@ from crewai_tools import SerperDevTool
 from langchain_openai import ChatOpenAI
 import os
 
-# Streamlit setup
+# ------------------- UI SETUP -------------------
 st.set_page_config(page_title="AI Meeting Agent 📝", layout="wide")
 st.title("AI Meeting Preparation Agent 📝")
 
-# Sidebar API Keys
+# ------------------- SIDEBAR -------------------
 st.sidebar.header("API Keys")
 
 openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 serper_api_key = st.sidebar.text_input("Serper API Key", type="password")
 
-# Check keys
+# ------------------- MAIN LOGIC -------------------
 if openai_api_key and serper_api_key:
     os.environ["OPENAI_API_KEY"] = openai_api_key
     os.environ["SERPER_API_KEY"] = serper_api_key
 
-    # LLM
+    # ✅ FIXED LLM CONFIG
     llm = ChatOpenAI(
         model="gpt-3.5-turbo",
         temperature=0.7
     )
 
+    # ✅ TOOL (MANDATORY FOR ALL AGENTS)
     search_tool = SerperDevTool()
 
-    # Inputs
+    # ------------------- INPUTS -------------------
     company_name = st.text_input("Enter the company name:")
     meeting_objective = st.text_input("Enter the meeting objective:")
     attendees = st.text_area("Enter attendees and roles:")
@@ -41,7 +42,7 @@ if openai_api_key and serper_api_key:
     )
     focus_areas = st.text_input("Focus areas or concerns:")
 
-    # Agents
+    # ------------------- AGENTS -------------------
     context_analyzer = Agent(
         role='Meeting Context Specialist',
         goal='Analyze meeting background',
@@ -68,7 +69,7 @@ if openai_api_key and serper_api_key:
         backstory='Expert planner',
         verbose=True,
         allow_delegation=False,
-        tools=[],   # ✅ FIX HERE
+        tools=[search_tool],  # IMPORTANT
         llm=llm
     )
 
@@ -78,17 +79,18 @@ if openai_api_key and serper_api_key:
         backstory='Expert communicator',
         verbose=True,
         allow_delegation=False,
-        tools=[],   # ✅ FIX HERE
+        tools=[search_tool],  # IMPORTANT
         llm=llm
     )
 
-    # Tasks
+    # ------------------- TASKS -------------------
     task1 = Task(
         description=f"""
         Analyze {company_name} for meeting.
         Objective: {meeting_objective}
         Attendees: {attendees}
         Focus: {focus_areas}
+        Include company research and insights.
         """,
         agent=context_analyzer
     )
@@ -96,14 +98,14 @@ if openai_api_key and serper_api_key:
     task2 = Task(
         description=f"""
         Provide industry analysis for {company_name}.
-        Include trends and competitors.
+        Include trends, competitors, and opportunities.
         """,
         agent=industry_expert
     )
 
     task3 = Task(
         description=f"""
-        Create meeting agenda for {meeting_duration} minutes.
+        Create a structured meeting agenda for {meeting_duration} minutes.
         Include talking points and strategy.
         """,
         agent=strategist
@@ -111,13 +113,13 @@ if openai_api_key and serper_api_key:
 
     task4 = Task(
         description=f"""
-        Create executive brief for {company_name}.
-        Include summary, Q&A, recommendations.
+        Create an executive briefing for {company_name}.
+        Include summary, key points, Q&A, and recommendations.
         """,
         agent=communicator
     )
 
-    # Crew
+    # ------------------- CREW -------------------
     crew = Crew(
         agents=[context_analyzer, industry_expert, strategist, communicator],
         tasks=[task1, task2, task3, task4],
@@ -125,7 +127,7 @@ if openai_api_key and serper_api_key:
         process=Process.sequential
     )
 
-    # Run
+    # ------------------- EXECUTION -------------------
     if st.button("Prepare Meeting"):
         with st.spinner("Preparing your meeting..."):
             result = crew.kickoff()
