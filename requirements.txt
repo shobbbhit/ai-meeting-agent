@@ -5,6 +5,7 @@ google-generativeai==0.7.2
 crewai==0.11.2
 crewai-tools
 
+langchain==0.0.350
 langchain-openai==0.0.5
 
 chromadb==0.4.24
