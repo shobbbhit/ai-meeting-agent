@@ -2,128 +2,123 @@ import streamlit as st
 from crewai import Agent, Task, Crew
 from crewai.process import Process
 from crewai_tools import SerperDevTool
-import google.generativeai as genai
+from langchain_openai import ChatOpenAI
 import os
 
-# Streamlit app setup
+# Streamlit setup
 st.set_page_config(page_title="AI Meeting Agent 📝", layout="wide")
 st.title("AI Meeting Preparation Agent 📝")
 
-# Sidebar for API keys
+# Sidebar API Keys
 st.sidebar.header("API Keys")
-gemini_api_key = st.sidebar.text_input("Google Gemini API Key", type="password")
+
+openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 serper_api_key = st.sidebar.text_input("Serper API Key", type="password")
 
-# Check if all API keys are set
-if gemini_api_key and serper_api_key:
-    os.environ["GEMINI_API_KEY"] = gemini_api_key
+# Check keys
+if openai_api_key and serper_api_key:
+    os.environ["OPENAI_API_KEY"] = openai_api_key
     os.environ["SERPER_API_KEY"] = serper_api_key
 
-    # Configure Gemini (for future use if needed)
-    genai.configure(api_key=gemini_api_key)
+    # ✅ Explicit LLM (THIS FIXES YOUR ERROR)
+    llm = ChatOpenAI(
+        model="gpt-3.5-turbo",
+        temperature=0.7
+    )
 
     search_tool = SerperDevTool()
 
-    # Input fields
+    # Inputs
     company_name = st.text_input("Enter the company name:")
     meeting_objective = st.text_input("Enter the meeting objective:")
-    attendees = st.text_area("Enter the attendees and their roles (one per line):")
+    attendees = st.text_area("Enter attendees and roles:")
     meeting_duration = st.number_input(
-        "Enter the meeting duration (in minutes):",
+        "Meeting duration (minutes)",
         min_value=15,
         max_value=180,
         value=60,
         step=15
     )
-    focus_areas = st.text_input("Enter any specific areas of focus or concerns:")
+    focus_areas = st.text_input("Focus areas or concerns:")
 
-    # Define Agents (NO LLM here)
+    # Agents (WITH LLM)
     context_analyzer = Agent(
         role='Meeting Context Specialist',
-        goal='Analyze and summarize key background information for the meeting',
-        backstory='Expert at understanding business context quickly.',
+        goal='Analyze meeting background',
+        backstory='Expert in business analysis',
         verbose=True,
         allow_delegation=False,
-        tools=[search_tool]
+        tools=[search_tool],
+        llm=llm
     )
 
-    industry_insights_generator = Agent(
+    industry_expert = Agent(
         role='Industry Expert',
-        goal='Provide industry analysis and trends',
-        backstory='Seasoned analyst with deep industry knowledge.',
+        goal='Provide industry insights',
+        backstory='Industry analyst',
         verbose=True,
         allow_delegation=False,
-        tools=[search_tool]
+        tools=[search_tool],
+        llm=llm
     )
 
-    strategy_formulator = Agent(
+    strategist = Agent(
         role='Meeting Strategist',
-        goal='Create meeting strategy and agenda',
-        backstory='Expert meeting planner.',
+        goal='Create agenda and strategy',
+        backstory='Expert planner',
         verbose=True,
         allow_delegation=False,
+        llm=llm
     )
 
-    executive_briefing_creator = Agent(
+    communicator = Agent(
         role='Communication Specialist',
-        goal='Create concise executive briefings',
-        backstory='Expert communicator.',
+        goal='Create executive brief',
+        backstory='Expert communicator',
         verbose=True,
         allow_delegation=False,
+        llm=llm
     )
 
     # Tasks
-    context_analysis_task = Task(
+    task1 = Task(
         description=f"""
-        Analyze the meeting with {company_name}.
+        Analyze {company_name} for meeting.
         Objective: {meeting_objective}
         Attendees: {attendees}
-        Duration: {meeting_duration} minutes
         Focus: {focus_areas}
-
-        Include company research, news, competitors.
         """,
         agent=context_analyzer
     )
 
-    industry_analysis_task = Task(
+    task2 = Task(
         description=f"""
         Provide industry analysis for {company_name}.
-        Include trends, competition, opportunities.
+        Include trends and competitors.
         """,
-        agent=industry_insights_generator
+        agent=industry_expert
     )
 
-    strategy_task = Task(
+    task3 = Task(
         description=f"""
-        Create a detailed meeting agenda for {meeting_duration} minutes.
+        Create meeting agenda for {meeting_duration} minutes.
         Include talking points and strategy.
         """,
-        agent=strategy_formulator
+        agent=strategist
     )
 
-    brief_task = Task(
+    task4 = Task(
         description=f"""
-        Create executive brief for meeting with {company_name}.
-        Include summary, talking points, Q&A, recommendations.
+        Create executive brief for {company_name}.
+        Include summary, Q&A, recommendations.
         """,
-        agent=executive_briefing_creator
+        agent=communicator
     )
 
     # Crew
     crew = Crew(
-        agents=[
-            context_analyzer,
-            industry_insights_generator,
-            strategy_formulator,
-            executive_briefing_creator
-        ],
-        tasks=[
-            context_analysis_task,
-            industry_analysis_task,
-            strategy_task,
-            brief_task
-        ],
+        agents=[context_analyzer, industry_expert, strategist, communicator],
+        tasks=[task1, task2, task3, task4],
         verbose=True,
         process=Process.sequential
     )
@@ -135,4 +130,4 @@ if gemini_api_key and serper_api_key:
         st.markdown(result)
 
 else:
-    st.warning("Please enter both API keys to continue.")
+    st.warning("Please enter OpenAI and Serper API keys.")
