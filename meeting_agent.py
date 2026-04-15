@@ -2,7 +2,7 @@ import streamlit as st
 from crewai import Agent, Task, Crew
 from crewai.process import Process
 from crewai_tools import SerperDevTool
-from langchain_openai import ChatOpenAI
+import anthropic
 import os
 
 # ------------------- UI SETUP -------------------
@@ -12,18 +12,20 @@ st.title("AI Meeting Preparation Agent 📝")
 # ------------------- SIDEBAR -------------------
 st.sidebar.header("API Keys")
 
-openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+anthropic_api_key = st.sidebar.text_input("Anthropic API Key", type="password")
 serper_api_key = st.sidebar.text_input("Serper API Key", type="password")
 
 # ------------------- MAIN LOGIC -------------------
-if openai_api_key and serper_api_key:
-    os.environ["OPENAI_API_KEY"] = openai_api_key
+if anthropic_api_key and serper_api_key:
+    os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
     os.environ["SERPER_API_KEY"] = serper_api_key
 
-    # ✅ FIXED LLM CONFIG
-    llm = ChatOpenAI(
-        model="gpt-3.5-turbo",
-        temperature=0.7
+    # ✅ ANTHROPIC LLM
+    from langchain_anthropic import ChatAnthropic
+    llm = ChatAnthropic(
+        model="claude-3-5-sonnet-20241022",
+        temperature=0.7,
+        api_key=anthropic_api_key
     )
 
     # ✅ TOOL (MANDATORY FOR ALL AGENTS)
@@ -69,7 +71,7 @@ if openai_api_key and serper_api_key:
         backstory='Expert planner',
         verbose=True,
         allow_delegation=False,
-        tools=[search_tool],  # IMPORTANT
+        tools=[search_tool],
         llm=llm
     )
 
@@ -79,7 +81,7 @@ if openai_api_key and serper_api_key:
         backstory='Expert communicator',
         verbose=True,
         allow_delegation=False,
-        tools=[search_tool],  # IMPORTANT
+        tools=[search_tool],
         llm=llm
     )
 
@@ -134,4 +136,4 @@ if openai_api_key and serper_api_key:
         st.markdown(result)
 
 else:
-    st.warning("Please enter OpenAI and Serper API keys.")
+    st.warning("Please enter Anthropic and Serper API keys.")
