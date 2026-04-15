@@ -2,7 +2,7 @@ import streamlit as st
 from crewai import Agent, Task, Crew
 from crewai.process import Process
 from crewai_tools import SerperDevTool
-import anthropic
+from langchain_anthropic import ChatAnthropic
 import os
 
 # ------------------- UI SETUP -------------------
@@ -21,7 +21,6 @@ if anthropic_api_key and serper_api_key:
     os.environ["SERPER_API_KEY"] = serper_api_key
 
     # ✅ ANTHROPIC LLM
-    from langchain_anthropic import ChatAnthropic
     llm = ChatAnthropic(
         model="claude-3-5-sonnet-20241022",
         temperature=0.7,
@@ -94,7 +93,8 @@ if anthropic_api_key and serper_api_key:
         Focus: {focus_areas}
         Include company research and insights.
         """,
-        agent=context_analyzer
+        agent=context_analyzer,
+        expected_output="Comprehensive company analysis"
     )
 
     task2 = Task(
@@ -102,7 +102,8 @@ if anthropic_api_key and serper_api_key:
         Provide industry analysis for {company_name}.
         Include trends, competitors, and opportunities.
         """,
-        agent=industry_expert
+        agent=industry_expert,
+        expected_output="Industry insights and analysis"
     )
 
     task3 = Task(
@@ -110,7 +111,8 @@ if anthropic_api_key and serper_api_key:
         Create a structured meeting agenda for {meeting_duration} minutes.
         Include talking points and strategy.
         """,
-        agent=strategist
+        agent=strategist,
+        expected_output="Detailed meeting agenda"
     )
 
     task4 = Task(
@@ -118,7 +120,8 @@ if anthropic_api_key and serper_api_key:
         Create an executive briefing for {company_name}.
         Include summary, key points, Q&A, and recommendations.
         """,
-        agent=communicator
+        agent=communicator,
+        expected_output="Executive briefing document"
     )
 
     # ------------------- CREW -------------------
