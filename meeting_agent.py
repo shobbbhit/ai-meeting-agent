@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import os
 
 st.set_page_config(page_title="AI Meeting Agent 📝", layout="wide")
 st.title("AI Meeting Preparation Agent 📝")
@@ -21,7 +20,8 @@ if openrouter_api_key:
                 url="https://openrouter.ai/api/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {openrouter_api_key}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://ai-meeting-agent.streamlit.app",
                 },
                 json={
                     "model": "meta-llama/llama-3.3-70b-instruct:free",
@@ -47,6 +47,9 @@ Format everything clearly with markdown headings."""}
                 }
             )
             result = response.json()
-            st.markdown(result["choices"][0]["message"]["content"])
+            if "choices" in result:
+                st.markdown(result["choices"][0]["message"]["content"])
+            else:
+                st.error(f"API Error: {result}")
 else:
     st.warning("Please enter your OpenRouter API key in the sidebar.")
