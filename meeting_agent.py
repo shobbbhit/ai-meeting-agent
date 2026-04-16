@@ -21,7 +21,7 @@ if gemini_api_key and serper_api_key:
 
     if st.button("Prepare Meeting"):
         with st.spinner("Preparing your meeting..."):
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-2.0-flash")
             prompt = f"""You are an expert meeting preparation assistant.
             
 Company: {company_name}
