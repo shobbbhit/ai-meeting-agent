@@ -1,18 +1,14 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
 import os
 
 st.set_page_config(page_title="AI Meeting Agent 📝", layout="wide")
 st.title("AI Meeting Preparation Agent 📝")
 
-st.sidebar.header("API Keys")
-gemini_api_key = st.sidebar.text_input("Google Gemini API Key", type="password")
-serper_api_key = st.sidebar.text_input("Serper API Key", type="password")
+st.sidebar.header("API Key")
+openrouter_api_key = st.sidebar.text_input("OpenRouter API Key (free at openrouter.ai)", type="password")
 
-if gemini_api_key and serper_api_key:
-    os.environ["SERPER_API_KEY"] = serper_api_key
-    genai.configure(api_key=gemini_api_key)
-
+if openrouter_api_key:
     company_name = st.text_input("Enter the company name:")
     meeting_objective = st.text_input("Enter the meeting objective:")
     attendees = st.text_area("Enter attendees and roles:")
@@ -21,9 +17,17 @@ if gemini_api_key and serper_api_key:
 
     if st.button("Prepare Meeting"):
         with st.spinner("Preparing your meeting..."):
-            model = genai.GenerativeModel("gemini-2.0-flash")
-            prompt = f"""You are an expert meeting preparation assistant.
-            
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {openrouter_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "meta-llama/llama-3.3-70b-instruct:free",
+                    "messages": [
+                        {"role": "system", "content": "You are an expert meeting preparation assistant."},
+                        {"role": "user", "content": f"""
 Company: {company_name}
 Meeting Objective: {meeting_objective}
 Attendees: {attendees}
@@ -37,10 +41,12 @@ Provide a comprehensive meeting preparation package including:
 4. Executive briefing with talking points and Q&A prep
 5. Strategic recommendations and next steps
 
-Format everything clearly with markdown headings."""
-
-            response = model.generate_content(prompt)
-            st.markdown(response.text)
-
+Format everything clearly with markdown headings."""}
+                    ],
+                    "max_tokens": 4096
+                }
+            )
+            result = response.json()
+            st.markdown(result["choices"][0]["message"]["content"])
 else:
-    st.warning("Please enter your Gemini and Serper API keys.")
+    st.warning("Please enter your OpenRouter API key in the sidebar.")
